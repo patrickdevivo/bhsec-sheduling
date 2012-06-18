@@ -62,19 +62,19 @@ r = random.choice(lkup.keys())
 print lkup[r],classes[lkup[r]]
 
 
-def check_teachers(cl, db=classes):
-	teachTime = []
+def check_teachers(db=classes):
+	teachTime = {}
 	gr = {}
-	for c in cl:
-		for m in db[c]["meets"]:
-			if m in teachTime[db[c]["teacher"]]:
+	for c in db.values():
+		for m in c["meets"]:
+			if m in teachTime.get(c["teacher"],[]):
 				print "Teacher conflict, %s: %s per %s day %s" % (db[c]["teacher"], c, db[c]["meets"][0], db[c]["meets"][1])
-		gr[db[c]["meets"]] = c
-		teachTime[db[c]["teacher"]].extend(gr[db[c]["meets"]])
+		gr[c["meets"]] = c
+		teachTime[c["teacher"]] = gr[c["meets"]]
 	prevDay = ''
 	prevPeriod = 9
 	classesInRow = 0
-	for teacher in teachTime:
+	for teacher in teachTime.values():
 		for day, period in teacher.sort():
 			if day != prevDay:
 				prevDay = day
@@ -139,13 +139,15 @@ for x in xrange(170):
             
 
 for s in random.sample(range(170),3):
-    print s
+    # print s
     # print students[s]
     m=check_stud(students[s])
     # print m
     if m:
         print_sched(m)
 
+check_teachers()
+		
 for c in classes:
     # print c
     classes[c]["roster"].sort()
