@@ -14,7 +14,8 @@ rg = []
 
 for x in fin.readline().split(','):
     # print x
-    print qpat.match(x).groups()[0]
+    # print qpat.match(x).groups()[0]
+	pass
 
 for x in range(7):
     rg.append(fin.readline().split(','))
@@ -28,7 +29,7 @@ for i,v in enumerate(rg):
         if c:
             grid[i+1][day] = set(c.groups()[0].split())
 
-print grid
+#print grid
 
 classes = {}
 
@@ -45,6 +46,7 @@ while l:
 		#course code, section number is the key for classes
         cl = (l[1],int(l[2]))
         lkup[l[0]] = cl
+        # print l
         classes[cl] = {"name":l[3].upper(),"teacher":l[4],"capacity":int(l[5]),"roster":[],"meets":[]}
         
     l = fin.readline().strip()
@@ -59,7 +61,7 @@ for p, ds in grid.items():
                 
 #for debugging
 r = random.choice(lkup.keys())
-print lkup[r],classes[lkup[r]]
+#print lkup[r],classes[lkup[r]]
 
 
 def check_teachers(db=classes):
@@ -67,15 +69,16 @@ def check_teachers(db=classes):
 	gr = {}
 	for c in db.values():
 		for m in c["meets"]:
-			if m in teachTime.get(c["teacher"],[]):
-				print "Teacher conflict, %s: %s per %s day %s" % (db[c]["teacher"], c, db[c]["meets"][0], db[c]["meets"][1])
-		gr[c["meets"]] = c
-		teachTime[c["teacher"]] = gr[c["meets"]]
+			if m in teachTime.get(c["teacher"],{}):
+				print "Teacher conflict, %s: %s per %s day %s" % (c["teacher"], c, m[0], m[1])
+		gr[tuple(c["meets"])] = c["name"]
+		teachTime[c["teacher"]] = c["meets"]
 	prevDay = ''
 	prevPeriod = 9
 	classesInRow = 0
 	for teacher in teachTime.values():
-		for day, period in teacher.sort():
+		teacher.sort()
+		for day, period in teacher:
 			if day != prevDay:
 				prevDay = day
 				classesInRow = 0
@@ -143,8 +146,8 @@ for s in random.sample(range(170),3):
     # print students[s]
     m=check_stud(students[s])
     # print m
-    if m:
-        print_sched(m)
+    # if m:
+        # print_sched(m)
 
 check_teachers()
 		
@@ -153,5 +156,5 @@ for c in classes:
     classes[c]["roster"].sort()
     if len(classes[c]["roster"]) > int(classes[c]["capacity"]):
         print "Overbooked", c, classes[c]
-    if 1 == c[1]:
-        print c, ' '.join([str(x) for x in classes[c]["roster"]])    
+    # if 1 == c[1]:
+        # print c, ' '.join([str(x) for x in classes[c]["roster"]])    
