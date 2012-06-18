@@ -70,11 +70,11 @@ def check_teachers(db=classes):
 			if m in teachTime.get(c["teacher"],[]):
 				print "Teacher conflict, %s: %s per %s day %s" % (db[c]["teacher"], c, db[c]["meets"][0], db[c]["meets"][1])
 		gr[c["meets"]] = c
-		teachTime[c["teacher"]].extend(gr[c["meets"]])
+		teachTime[c["teacher"]] = gr[c["meets"]]
 	prevDay = ''
 	prevPeriod = 9
 	classesInRow = 0
-	for teacher in teachTime:
+	for teacher in teachTime.values():
 		for day, period in teacher.sort():
 			if day != prevDay:
 				prevDay = day
@@ -139,7 +139,7 @@ for x in xrange(170):
             
 
 for s in random.sample(range(170),3):
-    print s
+    # print s
     # print students[s]
     m=check_stud(students[s])
     # print m
