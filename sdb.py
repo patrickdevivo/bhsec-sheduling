@@ -123,20 +123,37 @@ for x in xrange(170):
     if grade is 10:
         gp = random.choice([(1,2,7),(3,4,8),(1,2,7),(3,4,8),(1,2,7),(3,4,8),(5,6),(5,6)])
         chem = random.choice(gp)
-        c = lkup["C"+str(chem)]
-        students[x].append(c)
-        classes[c]["roster"].append(x)
         c = lkup["CL"+str(chem)]
-        #note two things happen when you add a class
-        students[x].append(c)
-        classes[c]["roster"].append(x)
     if grade is 9:
-		gp = random.choice([(1,3,5),(2,4,6),(1,3,5),(2,4,6),(1,3,5),(2,4,6),(5,6),(5,6)])
+        gp = random.choice([(1,3,5),(2,4,6),(1,3,5),(2,4,6),(1,3,5),(2,4,6),(5,6),(5,6)])
+    #note two things happen when you add a class
+    breakcount = 0
+    while classes[c]["capacity"] < classes[c]["roster"]:
+        breakcount += 1
+        chem = random.choice(gp)
+        c = lkup["C"+str(chem)]
+        if breakcount > 8:
+            break
+    students[x].append(c)
+    classes[c]["roster"].append(x)
+    c = lkup["CL"+str(chem)]
+    students[x].append(c)
+    classes[c]["roster"].append(x)
+    
+    breakcount = 0
+
     for cl in ("M","E","H"):
         code = random.choice(gp)
         c = lkup[cl+str(code)]
+        while classes[c]["capacity"]<classes[c]["roster"]:
+            breakcount += 1
+            code = random.choice(gp)
+            c = lkup[cl+str(code)]
+            if breakcount > 100:
+                break
         students[x].append(c)
         classes[c]["roster"].append(x)
+        breakcount = 0
     code = random.choice(gp)
     for l in "SLM":
         if "F" + l + str(code) in lkup:
@@ -158,6 +175,6 @@ for c in classes:
     # print c
     classes[c]["roster"].sort()
     if len(classes[c]["roster"]) > int(classes[c]["capacity"]):
-        print "Overbooked", c, classes[c]
+        print "Overbooked by %s" % str(len(classes[c]["roster"])-classes[c]["capacity"]), c, classes[c]
     # if 1 == c[1]:
         # print c, ' '.join([str(x) for x in classes[c]["roster"]])    
