@@ -5,8 +5,9 @@ qpat = re.compile(r'"?([^"]+)"?')
 # for x in dir(qpat):
 #     if '_' not in x:
 #         print x
-
-fin = open ("grid10.csv",'r')
+grade = 9
+file = 'grid%s.csv' % (grade)
+fin = open (file,'r')
 
 #raw grid
 
@@ -34,6 +35,7 @@ for i,v in enumerate(rg):
 classes = {}
 
 lkup = {}
+lkup9 = {}
 
 l = fin.readline().strip()
 
@@ -45,7 +47,7 @@ while l:
         l = [qpat.match(i).groups()[0] for i in l if qpat.match(i)]
         #course code, section number is the key for classes
         cl = (l[1],int(l[2]))
-        lkup[l[0]] = cl
+		lkup[l[0]] = cl
         # print l
         classes[cl] = {"name":l[3].upper(),"teacher":l[4],"capacity":int(l[5]),"roster":[],"meets":[]}
         
@@ -119,9 +121,13 @@ def print_sched(gr,db=classes):
 students = {}
 for x in xrange(170):
     students[x] = []
-    gp = random.choice([(1,2,7),(3,4,8),(1,2,7),(3,4,8),(1,2,7),(3,4,8),(5,6),(5,6)])
-    chem = random.choice(gp)
-    c = lkup["CL"+str(chem)]
+    if grade is 10:
+        gp = random.choice([(1,2,7),(3,4,8),(1,2,7),(3,4,8),(1,2,7),(3,4,8),(5,6),(5,6)])
+        chem = random.choice(gp)
+        c = lkup["CL"+str(chem)]
+    if grade is 9:
+        gp = random.choice([(1,3,5),(2,4,6),(1,3,5),(2,4,6),(1,3,5),(2,4,6),(5,6),(5,6)])
+		c = lkup[""]
     #note two things happen when you add a class
     breakcount = 0
     while classes[c]["capacity"] < len(classes[c]["roster"]):
@@ -137,6 +143,7 @@ for x in xrange(170):
     classes[c]["roster"].append(x)
     
     breakcount = 0
+
     for cl in ("M","E","H"):
         code = random.choice(gp)
         c = lkup[cl+str(code)]
@@ -156,7 +163,6 @@ for x in xrange(170):
             students[x].append(c)
             classes[c]["roster"].append(x)
             
-
 for s in random.sample(range(170),3):
     # print s
     # print students[s]
