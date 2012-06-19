@@ -35,6 +35,7 @@ for i,v in enumerate(rg):
 classes = {}
 
 lkup = {}
+lkup9 = {}
 
 l = fin.readline().strip()
 
@@ -46,7 +47,7 @@ while l:
         l = [qpat.match(i).groups()[0] for i in l if qpat.match(i)]
         #course code, section number is the key for classes
         cl = (l[1],int(l[2]))
-        lkup[l[0]] = cl
+		lkup[l[0]] = cl
         # print l
         classes[cl] = {"name":l[3].upper(),"teacher":l[4],"capacity":int(l[5]),"roster":[],"meets":[]}
         
@@ -126,9 +127,10 @@ for x in xrange(170):
         c = lkup["CL"+str(chem)]
     if grade is 9:
         gp = random.choice([(1,3,5),(2,4,6),(1,3,5),(2,4,6),(1,3,5),(2,4,6),(5,6),(5,6)])
+		c = lkup[""]
     #note two things happen when you add a class
     breakcount = 0
-    while classes[c]["capacity"] < classes[c]["roster"]:
+    while classes[c]["capacity"] < len(classes[c]["roster"]):
         breakcount += 1
         chem = random.choice(gp)
         c = lkup["C"+str(chem)]
@@ -145,7 +147,7 @@ for x in xrange(170):
     for cl in ("M","E","H"):
         code = random.choice(gp)
         c = lkup[cl+str(code)]
-        while classes[c]["capacity"]<classes[c]["roster"]:
+        while classes[c]["capacity"] < len(classes[c]["roster"]):
             breakcount += 1
             code = random.choice(gp)
             c = lkup[cl+str(code)]
