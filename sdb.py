@@ -124,7 +124,7 @@ for x in xrange(170):
     c = lkup["CL"+str(chem)]
     #note two things happen when you add a class
     breakcount = 0
-    while classes[c]["capacity"] < classes[c]["roster"]:
+    while classes[c]["capacity"] < len(classes[c]["roster"]):
         breakcount += 1
         chem = random.choice(gp)
         c = lkup["C"+str(chem)]
@@ -140,7 +140,7 @@ for x in xrange(170):
     for cl in ("M","E","H"):
         code = random.choice(gp)
         c = lkup[cl+str(code)]
-        while classes[c]["capacity"]<classes[c]["roster"]:
+        while classes[c]["capacity"] < len(classes[c]["roster"]):
             breakcount += 1
             code = random.choice(gp)
             c = lkup[cl+str(code)]
@@ -172,5 +172,7 @@ for c in classes:
     classes[c]["roster"].sort()
     if len(classes[c]["roster"]) > int(classes[c]["capacity"]):
         print "Overbooked by %s" % str(len(classes[c]["roster"])-classes[c]["capacity"]), c, classes[c]
+    elif len(classes[c]["roster"]) < 5:
+        print "Underbooked at %s" % str(len(classes[c]["roster"])), c, classes[c]
     # if 1 == c[1]:
         # print c, ' '.join([str(x) for x in classes[c]["roster"]])    
