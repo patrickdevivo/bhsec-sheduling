@@ -44,7 +44,7 @@ load_data = (callback)->
 					classes[class_[0]+'-'+grade] = new Class class_[1], class_[2], class_[3].toUpperCase(), class_[4].toUpperCase(), class_[5], class_[6], grade
 				)
 				_.each(raw_schedule, (row, period)->
-					console.log row
+					# console.log row
 					schedule.M[row[0]].push(_.map(row[1].split(' '), (code)->code+'-'+grade))
 					schedule.T[row[0]].push(_.map(row[2].split(' '), (code)->code+'-'+grade))
 					schedule.W[row[0]].push(_.map(row[3].split(' '), (code)->code+'-'+grade))
@@ -111,7 +111,6 @@ check_teachers = ->
 				current = list.shift()
 				if _.include(list, current)
 					message = 'Check day ' + day + ' and period '+ index + ', ' + current + ' is overbooked'
-					console.log message
 					problems.push(['teacher conflict', message])
 			)
 			# check if a teacher is teaching more than three periods in a row
