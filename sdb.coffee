@@ -4,6 +4,16 @@ Table = require 'cli-table'
 
 class Class
 	constructor: (@code, @sect, @title, @teacher, @room, @capacity, @grade) ->
+		@enrollment = []
+
+	enroll_student: (student_id) ->
+		@enrollment.push(student_id)
+		_.each(students, (student, index) =>
+			if student.id is student_id
+				place_in_students = index
+			else
+				console.log "Student not found"
+		)
 
 classes = {}
 schedule = {
@@ -13,9 +23,10 @@ schedule = {
 	R: [[], [], [], [], [], [], [], []]
 	F: [[], [], [], [], [], [], [], []]
 }
+students = []
 
 load_data = (callback)->
-	grades = [9, 10]
+	grades = [9, 10, 'GEN']
 	remaining = grades.length
 	_.each(grades, (grade)->
 		raw_classes = []
@@ -60,6 +71,16 @@ problems = new Table({
 	head: ['Error', 'Message']
 })
 
+printable_schedule = new Table(
+	head: ['Period', 'M', 'T', 'W', 'R', 'F']
+)
+
+print_schedule = ->
+	_.times(9, (i)->
+		printable_schedule.push([i, schedule.M[i], schedule.T[i], schedule.W[i], schedule.R[i], schedule.F[i]])
+	)
+	console.log printable_schedule.toString()
+
 check_schedule = ->
 	for day of schedule
 		for period in schedule[day]
@@ -90,7 +111,6 @@ check_teachers = ->
 				current = list.shift()
 				if _.include(list, current)
 					message = 'Check day ' + day + ' and period '+ index + ', ' + current + ' is overbooked'
-					console.log message
 					problems.push(['teacher conflict', message])
 			)
 			# check if a teacher is teaching more than three periods in a row
@@ -102,12 +122,42 @@ check_teachers = ->
 					problems.push(['3+ periods for teacher', message])
 			)
 
+generate_students = (grade)->
+	switch grade
+		when 9
+			number = 160
+		when 10
+			number = 180
+		when 'COL'
+			number = 150
+		else
+			number = 0
+		
+	_.times(number, (i)->
+		new_student = {
+			id: i+'-'+grade
+			grade: grade
+			history: ''
+			english: ''
+			math: ''
+			science: ''
+			language: ''
+			gym: ''
+			art: ''
+		}
+		students.push(new_student)
+	)
+	# console.log students
+	
+
 load_data(()->
 	check_schedule()
 	check_teachers()
+	generate_students(9)
+	# print_schedule()
 	
 	if problems.length > 1
 		console.log problems.toString()
 		
-	console.log JSON.stringify(schedule)
+	# console.log JSON.stringify(schedule)
 )
