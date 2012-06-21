@@ -3,17 +3,65 @@ _ = require 'underscore'
 Table = require 'cli-table'
 
 class Class
-	constructor: (@code, @sect, @title, @teacher, @room, @capacity, @grade) ->
+	constructor: (@shorthand, @code, @sect, @title, @teacher, @room, @capacity, @grade) ->
 		@enrollment = []
 
+	check_enrollment_possible: (student_id) ->
+		if @enrollment.length >= @capacity
+			message = [false, 'Not enough space']
+		else
+			current_student = ''
+			_.each(students, (student, index) =>
+				if student.id is student_id
+					current_student = students[index]
+			)
+			
+			# check if class fits in student's current schedule
+			possible = true
+			class_meets = this.get_meeting_times()
+								
+			# console.log class_meets
+					
+			for i, student_day of current_student.schedule
+				for meeting in class_meets
+					if meeting.split('-')[0] is i
+						if current_student.schedule[meeting.split('-')[0]][meeting.split('-')[1]] isnt ''
+							possible = false
+			
+			if possible is false then note = 'Conflict' else note = ''
+			message = [possible, note]
+			return message
+			
+	get_meeting_times: ->
+		class_meets = []
+		for j, day of schedule
+			for period, period_number in day
+				for class_ in period
+					if class_ is @shorthand # when
+						class_meets.push(j+'-'+period_number)
+						
+		return class_meets
+		
+
 	enroll_student: (student_id) ->
-		@enrollment.push(student_id)
-		_.each(students, (student, index) =>
-			if student.id is student_id
-				place_in_students = index
-			else
-				console.log "Student not found"
-		)
+		if this.check_enrollment_possible(student_id)[0] is true
+			@enrollment.push(student_id)
+			class_meets = this.get_meeting_times()
+			
+			# lookup current student
+			current_student = ''
+			_.each(students, (student, index) =>
+				if student.id is student_id
+					current_student = students[index]
+			)
+			
+			for meeting in class_meets
+				current_student.schedule[meeting.split('-')[0]][meeting.split('-')[1]] += this.shorthand
+			
+			return true
+		else
+			return false
+			
 
 classes = {}
 schedule = {
@@ -41,7 +89,7 @@ load_data = (callback)->
 			)
 			.on('end', (count)->
 				_.each(raw_classes, (class_, index)-> # add to classess object new instance of every read in class with our code (M1) + grade (10) as key --> M110
-					classes[class_[0]+'-'+grade] = new Class class_[1], class_[2], class_[3].toUpperCase(), class_[4].toUpperCase(), class_[5], class_[6], grade
+					classes[class_[0]+'-'+grade] = new Class class_[0]+'-'+grade, class_[1], class_[2], class_[3].toUpperCase(), class_[4].toUpperCase(), class_[5], class_[6], grade
 				)
 				_.each(raw_schedule, (row, period)->
 					# console.log row
@@ -141,20 +189,70 @@ generate_students = (grade)->
 			english: ''
 			math: ''
 			science: ''
+			lab: ''
 			language: ''
 			gym: ''
 			art: ''
+			schedule: {
+				M: ['', '', '', '', '', '', '', ''] # DAY: period[classess[]]
+				T: ['', '', '', '', '', '', '', '']
+				W: ['', '', '', '', '', '', '', '']
+				R: ['', '', '', '', '', '', '', '']
+				F: ['', '', '', '', '', '', '', '']
+			}
 		}
 		students.push(new_student)
 	)
-	# console.log students
-	
 
+populate_schedule_with_students = ->
+	
+	fill_class = (requirement, filter) ->	
+		# place students in history class
+		for student in students
+			available_classes = _.filter(classes, (class_, name) -> return filter(class_, student, name))
+			available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible())
+		
+			# go thru available classes to join, if it's possible to join, join
+			for class_, i in available_classes
+				if class_.check_enrollment_possible(student.id)[0]
+					class_.enroll_student(student.id)
+					student[requirement] += class_.shorthand
+					# console.log class_
+					break
+				else if i is available_classes.length - 1
+					console.log 'Could not put student in class'
+		
+	fill_class('science', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0
+	)
+	
+	fill_class('lab', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0
+	)
+	
+	fill_class('math', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/MES21|MRS21/) is 0
+	)
+	
+	fill_class('history', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/HGS21|HUS21/) is 0
+	)
+	
+	fill_class('english', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
+	)
+	
+	for student in students
+		console.log student
+	
+		
 load_data(()->
 	check_schedule()
 	check_teachers()
 	generate_students(9)
+	generate_students(10)
 	# print_schedule()
+	populate_schedule_with_students()
 	
 	if problems.length > 1
 		console.log problems.toString()
