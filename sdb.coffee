@@ -1,6 +1,9 @@
 csv = require 'csv'
 _ = require 'underscore'
 Table = require 'cli-table'
+fs = require 'fs'
+request = require 'request'
+repl = require 'repl'
 
 class Class
 	constructor: (@shorthand, @code, @sect, @title, @teacher, @room, @capacity, @grade) ->
@@ -73,9 +76,16 @@ schedule = {
 }
 students = []
 
+# request.get('https://docs.google.com/spreadsheet/pub?key=0Aqmu56ahZ_JbdHpQYkpUamkyOEFvZWZiNGdWYWNnbUE&output=csv', (error, response, body)->
+# 	fs.writeFile('./grid9.csv', body, (err)->
+# 		console.log err if err
+# 	)
+# )
+
 load_data = (callback)->
 	grades = [9, 10, 'GEN']
 	remaining = grades.length
+
 	_.each(grades, (grade)->
 		raw_classes = []
 		raw_schedule = []
@@ -193,6 +203,7 @@ generate_students = (grade)->
 			language: ''
 			gym: ''
 			art: ''
+			section: 0
 			schedule: {
 				M: ['', '', '', '', '', '', '', ''] # DAY: period[classess[]]
 				T: ['', '', '', '', '', '', '', '']
@@ -211,23 +222,29 @@ populate_schedule_with_students = ->
 		for student in students
 			available_classes = _.filter(classes, (class_, name) -> return filter(class_, student, name))
 			available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible())
-		
+			
+			if student.section is 0 and student.grade is 9
+				student.section = _.shuffle([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[0]
+			if student.section is 0 and student.grade is 10
+				student.section = _.shuffle([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[0]
+			
 			# go thru available classes to join, if it's possible to join, join
 			for class_, i in available_classes
-				if class_.check_enrollment_possible(student.id)[0]
+				class_code = class_.shorthand.split('-')[0]
+				class_section = class_code.charAt(class_code.length-1)
+				class_section = parseInt(class_section)
+				if class_.check_enrollment_possible(student.id)[0] is true and student[requirement] is '' and _.contains(student.section, class_section)
 					class_.enroll_student(student.id)
 					student[requirement] += class_.shorthand
-					# console.log class_
-					break
-				else if i is available_classes.length - 1
-					console.log 'Could not put student in class'
+				else if i is available_classes.length - 1 and class_.check_enrollment_possible(student.id)[0] is false
+					problems.push(['student error', 'Could not put student ' + student.id + ' in a ' + requirement + ' class'])
 		
 	fill_class('science', (class_, student, name) ->
 		return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0
 	)
 	
 	fill_class('lab', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0
+		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0 and student.science.split('-')[0].split('')[1] is class_.section
 	)
 	
 	fill_class('math', (class_, student, name) ->
@@ -242,9 +259,6 @@ populate_schedule_with_students = ->
 		return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
 	)
 	
-	for student in students
-		console.log student
-	
 		
 load_data(()->
 	check_schedule()
@@ -254,8 +268,15 @@ load_data(()->
 	# print_schedule()
 	populate_schedule_with_students()
 	
-	if problems.length > 1
-		console.log problems.toString()
+	# if problems.length > 1
+		# console.log problems.toString()
 		
 	# console.log JSON.stringify(schedule)
+	
+	for class_ in classes
+		console.log 's'
 )
+
+debug = repl.start("SDB Debug> ")
+debug.context.classes = classes
+debug.context.students = students
