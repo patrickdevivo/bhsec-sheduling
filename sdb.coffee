@@ -1,16 +1,14 @@
 csv = require 'csv'
 _ = require 'underscore'
 Table = require 'cli-table'
-fs = require 'fs'
-request = require 'request'
 repl = require 'repl'
 
 class Class
 	constructor: (@shorthand, @code, @sect, @title, @teacher, @room, @capacity, @grade) ->
 		@enrollment = []
 
-	check_enrollment_possible: (student_id) ->
-		if @enrollment.length >= @capacity
+	check_enrollment_possible: (student_id, cap = true) ->
+		if @enrollment.length >= @capacity and cap
 			message = [false, 'Not enough space']
 		else
 			current_student = ''
@@ -76,12 +74,6 @@ schedule = {
 }
 students = []
 
-# request.get('https://docs.google.com/spreadsheet/pub?key=0Aqmu56ahZ_JbdHpQYkpUamkyOEFvZWZiNGdWYWNnbUE&output=csv', (error, response, body)->
-# 	fs.writeFile('./grid9.csv', body, (err)->
-# 		console.log err if err
-# 	)
-# )
-
 load_data = (callback)->
 	grades = [9, 10, 'GEN']
 	remaining = grades.length
@@ -124,6 +116,7 @@ load_data = (callback)->
 				console.log error
 			)
 	)
+
 	
 problems = new Table({
 	head: ['Error', 'Message']
@@ -152,6 +145,7 @@ check_teachers = ->
 			teachers_prev_period = []
 			teachers_this_period = []
 			teachers_next_period = []
+			teachers_next_next_period = []
 			
 			if schedule[day][index-1]
 				for class_code in schedule[day][index-1]
@@ -164,6 +158,10 @@ check_teachers = ->
 				for class_code in schedule[day][index+1]
 					if classes[class_code]
 						teachers_next_period.push(classes[class_code].teacher)
+			if schedule[day][index+2]
+				for class_code in schedule[day][index+2]
+					if classes[class_code]
+						teachers_next_next_period.push(classes[class_code].teacher)
 			# check if a teacher is teaching multiple classes in a given period
 			_.each(teachers_this_period, (teacher, i, list)->
 				current = list.shift()
@@ -173,17 +171,18 @@ check_teachers = ->
 			)
 			# check if a teacher is teaching more than three periods in a row
 			_.each(teachers_this_period, (teacher) ->
-				if _.include(teachers_prev_period, teacher) and _.include(teachers_next_period, teacher)
+				if _.include(teachers_prev_period, teacher) and _.include(teachers_next_period, teacher) and _.include(teachers_next_next_period, teacher)
 					prev = index-1 + ''
 					next = index+1 + ''
-					message = 'Check day ' + day + ' and periods ' + prev + ', ' + index + ', ' + next + ', ' + teacher + ' is scheduled 3 or more periods in a row'
-					problems.push(['3+ periods for teacher', message])
+					next_next = index+2 + ''
+					message = 'Check day ' + day + ' and periods ' + prev + ', ' + index + ', ' + next + ', ' + next_next + ' ' + teacher + ' is scheduled 3 or more periods in a row'
+					problems.push(['4+ periods for teacher', message])
 			)
 
 generate_students = (grade)->
 	switch grade
 		when 9
-			number = 160
+			number = 0
 		when 10
 			number = 180
 		when 'COL'
@@ -221,7 +220,7 @@ populate_schedule_with_students = ->
 		# place students in history class
 		for student in students
 			available_classes = _.filter(classes, (class_, name) -> return filter(class_, student, name))
-			available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible())
+			# available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible())
 			
 			if student.section is 0 and student.grade is 9
 				student.section = _.shuffle([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[0]
@@ -230,21 +229,23 @@ populate_schedule_with_students = ->
 			
 			# go thru available classes to join, if it's possible to join, join
 			for class_, i in available_classes
-				class_code = class_.shorthand.split('-')[0]
-				class_section = class_code.charAt(class_code.length-1)
-				class_section = parseInt(class_section)
+				class_section = parseInt(class_.sect)
 				if class_.check_enrollment_possible(student.id)[0] is true and student[requirement] is '' and _.contains(student.section, class_section)
 					class_.enroll_student(student.id)
 					student[requirement] += class_.shorthand
-				else if i is available_classes.length - 1 and class_.check_enrollment_possible(student.id)[0] is false
-					problems.push(['student error', 'Could not put student ' + student.id + ' in a ' + requirement + ' class'])
+				else
+					console.log class_.check_enrollment_possible(student.id)[0] + ' Enrollment?'
+					console.log student[requirement] is ''
+					console.log _.contains(student.section, class_section) + ' Section?'
+				# else if i is available_classes.length - 1 and class_.check_enrollment_possible(student.id)[0] is false
+					# problems.push(['student error', 'Could not put student ' + student.id + ' in a ' + requirement + ' class'])
 		
-	fill_class('science', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0
+	fill_class('lab', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0
 	)
 	
-	fill_class('lab', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0 and student.science.split('-')[0].split('')[1] is class_.section
+	fill_class('science', (class_, student, name) ->
+		return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0 and class_.code.search(/SPS21QL|SCS21QL/) isnt 0 and student.lab.split('-')[0].split('')[2] is class_.sect
 	)
 	
 	fill_class('math', (class_, student, name) ->
@@ -259,24 +260,33 @@ populate_schedule_with_students = ->
 		return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
 	)
 	
-		
+
 load_data(()->
-	check_schedule()
+	# check_schedule()
 	check_teachers()
 	generate_students(9)
 	generate_students(10)
 	# print_schedule()
 	populate_schedule_with_students()
-	
-	# if problems.length > 1
-		# console.log problems.toString()
+
+	if problems.length > 1
+		console.log problems.toString()
 		
-	# console.log JSON.stringify(schedule)
+	counter = 0
+	for student in students
+		counter++ if student.science isnt ''
+		
+	# for i, class_ of classes
+		# console.log class_.enrollment.length
+		
+	console.log counter
+	# console.log students
 	
-	for class_ in classes
-		console.log 's'
+	# console.log JSON.stringify(schedule)
 )
 
+###
 debug = repl.start("SDB Debug> ")
 debug.context.classes = classes
 debug.context.students = students
+debug.context.schedule = schedule
