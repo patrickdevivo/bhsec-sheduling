@@ -8,7 +8,7 @@ class Class
 		@enrollment = []
 
 	check_enrollment_possible: (student_id, cap = true) ->
-		if @enrollment.length >= @capacity and cap
+		if (@enrollment.length >= parseInt(@capacity) + 5) and cap
 			message = [false, 'Not enough space']
 		else
 			current_student = ''
@@ -182,7 +182,7 @@ check_teachers = ->
 generate_students = (grade)->
 	switch grade
 		when 9
-			number = 0
+			number = 160
 		when 10
 			number = 180
 		when 'COL'
@@ -217,48 +217,60 @@ generate_students = (grade)->
 populate_schedule_with_students = ->
 	
 	fill_class = (requirement, filter) ->	
-		# place students in history class
-		for student in students
-			available_classes = _.filter(classes, (class_, name) -> return filter(class_, student, name))
-			# available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible())
+		_.times(10000, (time) ->
+			for student, index in students
+				available_classes = _.filter(classes, (class_) -> return filter(class_, student))
+				available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible(student.id)[0])
+				
+				# console.log available_classes if index is 5
+				# console.log requirement if available_classes.length is 0
 			
-			if student.section is 0 and student.grade is 9
-				student.section = _.shuffle([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[0]
-			if student.section is 0 and student.grade is 10
-				student.section = _.shuffle([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[0]
+				if student.section is 0 and student.grade is 9
+					student.section = _.shuffle([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[0]
+				if student.section is 0 and student.grade is 10
+					student.section = _.shuffle([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[0]
 			
-			# go thru available classes to join, if it's possible to join, join
-			for class_, i in available_classes
-				class_section = parseInt(class_.sect)
-				if class_.check_enrollment_possible(student.id)[0] is true and student[requirement] is '' and _.contains(student.section, class_section)
-					class_.enroll_student(student.id)
-					student[requirement] += class_.shorthand
-				else
-					console.log class_.check_enrollment_possible(student.id)[0] + ' Enrollment?'
-					console.log student[requirement] is ''
-					console.log _.contains(student.section, class_section) + ' Section?'
-				# else if i is available_classes.length - 1 and class_.check_enrollment_possible(student.id)[0] is false
-					# problems.push(['student error', 'Could not put student ' + student.id + ' in a ' + requirement + ' class'])
-		
-	fill_class('lab', (class_, student, name) ->
+				if student[requirement] isnt ''
+					break
+				
+				# go thru available classes to join, if it's possible to join, join
+				for class_, i in available_classes
+					class_section = parseInt(class_.sect)
+					if _.contains(student.section, class_section)
+						class_.enroll_student(student.id)
+						student[requirement] += class_.shorthand
+						break_ = true
+					# else if i is available_classes.length - 1
+						# console.log class_
+				
+					# else
+					# 	console.log class_.check_enrollment_possible(student.id)[0] + ' Enrollment?'
+					# 	console.log student[requirement] is ''
+					# 	console.log _.contains(student.section, class_section) + ' Section?'
+					# else if i is available_classes.length - 1 and class_.check_enrollment_possible(student.id)[0] is false
+						# problems.push(['student error', 'Could not put student ' + student.id + ' in a ' + requirement + ' class'])
+		)
+	
+	fill_class('lab', (class_, student) ->
 		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0
 	)
 	
-	fill_class('science', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0 and class_.code.search(/SPS21QL|SCS21QL/) isnt 0 and student.lab.split('-')[0].split('')[2] is class_.sect
-	)
-	
-	fill_class('math', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/MES21|MRS21/) is 0
-	)
-	
-	fill_class('history', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/HGS21|HUS21/) is 0
-	)
-	
-	fill_class('english', (class_, student, name) ->
-		return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
-	)
+	# fill_class('science', (class_, student) ->
+	# 	# console.log class_.shorthand if student.lab.split('-')[0].split('')[2] is undefined
+	# 	return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0 and class_.code.search(/SPS21QL|SCS21QL/) isnt 0 and student.lab.split('-')[0].split('')[2] is class_.sect
+	# )
+	# 
+	# fill_class('math', (class_, student) ->
+	# 	return class_.grade is student.grade and class_.code.search(/MES21|MRS21/) is 0
+	# )
+	# 
+	# fill_class('history', (class_, student) ->
+	# 	return class_.grade is student.grade and class_.code.search(/HGS21|HUS21/) is 0
+	# )
+	# 
+	# fill_class('english', (class_, student) ->
+	# 	return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
+	# )
 	
 
 load_data(()->
@@ -274,12 +286,16 @@ load_data(()->
 		
 	counter = 0
 	for student in students
-		counter++ if student.science isnt ''
+		counter++ if student.lab isnt ''
 		
 	# for i, class_ of classes
 		# console.log class_.enrollment.length
 		
 	console.log counter
+	
+	for i, class_ of classes
+		console.log class_.enrollment.length + ' ' + i if class_.code.search(/SPS21QL|SCS21QL/) is 0
+			
 	# console.log students
 	
 	# console.log JSON.stringify(schedule)
