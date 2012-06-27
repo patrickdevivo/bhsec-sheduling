@@ -223,19 +223,23 @@ populate_schedule_with_students = ->
 				available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible(student.id)[0])
 				
 				# console.log available_classes if index is 5
-				# console.log requirement if available_classes.length is 0
+				console.log requirement if available_classes.length is 0
 			
 				if student.section is 0 and student.grade is 9
-					student.section = _.shuffle([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[0]
+					student.section = ([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[index%7]
 				if student.section is 0 and student.grade is 10
-					student.section = _.shuffle([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[0]
+					student.section = ([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[index%8]
 			
 				if student[requirement] isnt ''
 					break
 				
 				if available_classes.length is 0
 					console.log 'No classes available!'
-					# console.log student
+                    console.log student.grade
+					if student.grade is 9 
+                        console.log index%7
+                    if student.grade is 10
+                        console.log index%8
 				else
 					least_student_class = available_classes[0]
 					for class_, i in available_classes
