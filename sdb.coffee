@@ -8,7 +8,7 @@ class Class
 		@enrollment = []
 
 	check_enrollment_possible: (student_id, cap = true) ->
-		if (@enrollment.length >= parseInt(@capacity) + 5) and cap
+		if (@enrollment.length >= parseInt(@capacity)) and cap
 			message = [false, 'Not enough space']
 		else
 			current_student = ''
@@ -217,7 +217,7 @@ generate_students = (grade)->
 populate_schedule_with_students = ->
 	
 	fill_class = (requirement, filter) ->	
-		_.times(10000, (time) ->
+		_.times(1, (time) ->
 			for student, index in students
 				available_classes = _.filter(classes, (class_) -> return filter(class_, student))
 				available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible(student.id)[0])
@@ -233,44 +233,41 @@ populate_schedule_with_students = ->
 				if student[requirement] isnt ''
 					break
 				
-				# go thru available classes to join, if it's possible to join, join
-				for class_, i in available_classes
-					class_section = parseInt(class_.sect)
-					if _.contains(student.section, class_section)
-						class_.enroll_student(student.id)
-						student[requirement] += class_.shorthand
-						break_ = true
-					# else if i is available_classes.length - 1
-						# console.log class_
+				if available_classes.length is 0
+					console.log 'No classes available!'
+					# console.log student
+				else
+					least_student_class = available_classes[0]
+					for class_, i in available_classes
+						class_section = parseInt(class_.sect)
+						if class_.enrollment.length < least_student_class.enrollment.length and _.contains(student.section, class_section)
+							least_student_class = class_
 				
-					# else
-					# 	console.log class_.check_enrollment_possible(student.id)[0] + ' Enrollment?'
-					# 	console.log student[requirement] is ''
-					# 	console.log _.contains(student.section, class_section) + ' Section?'
-					# else if i is available_classes.length - 1 and class_.check_enrollment_possible(student.id)[0] is false
-						# problems.push(['student error', 'Could not put student ' + student.id + ' in a ' + requirement + ' class'])
+					least_student_class.enroll_student(student.id)
+					student[requirement] += least_student_class.shorthand
+
 		)
 	
 	fill_class('lab', (class_, student) ->
 		return class_.grade is student.grade and class_.code.search(/SPS21QL|SCS21QL/) is 0
 	)
 	
-	# fill_class('science', (class_, student) ->
-	# 	# console.log class_.shorthand if student.lab.split('-')[0].split('')[2] is undefined
-	# 	return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0 and class_.code.search(/SPS21QL|SCS21QL/) isnt 0 and student.lab.split('-')[0].split('')[2] is class_.sect
-	# )
-	# 
-	# fill_class('math', (class_, student) ->
-	# 	return class_.grade is student.grade and class_.code.search(/MES21|MRS21/) is 0
-	# )
-	# 
-	# fill_class('history', (class_, student) ->
-	# 	return class_.grade is student.grade and class_.code.search(/HGS21|HUS21/) is 0
-	# )
-	# 
-	# fill_class('english', (class_, student) ->
-	# 	return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
-	# )
+	fill_class('science', (class_, student) ->
+		# console.log class_.shorthand if student.lab.split('-')[0].split('')[2] is undefined
+		return class_.grade is student.grade and class_.code.search(/SCS21|SPS21/) is 0 and class_.code.search(/SPS21QL|SCS21QL/) isnt 0 and student.lab.split('-')[0].split('')[2] is class_.sect
+	)
+	
+	fill_class('math', (class_, student) ->
+		return class_.grade is student.grade and class_.code.search(/MES21|MRS21/) is 0
+	)
+	
+	fill_class('history', (class_, student) ->
+		return class_.grade is student.grade and class_.code.search(/HGS21|HUS21/) is 0
+	)
+	
+	fill_class('english', (class_, student) ->
+		return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
+	)
 	
 
 load_data(()->
@@ -286,15 +283,15 @@ load_data(()->
 		
 	counter = 0
 	for student in students
-		counter++ if student.lab isnt ''
+		counter++ if student.history isnt ''
 		
 	# for i, class_ of classes
 		# console.log class_.enrollment.length
 		
 	console.log counter
 	
-	for i, class_ of classes
-		console.log class_.enrollment.length + ' ' + i if class_.code.search(/SPS21QL|SCS21QL/) is 0
+	# for i, class_ of classes
+		# console.log class_.enrollment.length + ' ' + i if class_.code.search(/SPS21QL|SCS21QL/) is 0
 			
 	# console.log students
 	
