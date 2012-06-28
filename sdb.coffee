@@ -24,10 +24,10 @@ class Class
             for i, student_day of current_student.schedule
                 for meeting in class_meets
                     if meeting.split('-')[0] is i
-                        if student_day[meeting.split('-')[1]+1]
+                        if student_day[meeting.split('-')[1]]
                             possible = false
-                            console.log meeting
-                            console.log current_student.schedule
+                            #console.log meeting
+                            #console.log current_student.schedule
             
             if possible is false then note = 'Conflict' else note = ''
             message = [possible, note]
@@ -219,29 +219,27 @@ populate_schedule_with_students = ->
     fill_class = (requirement, filter) ->    
         _.times(1, (time) ->
             for student, index in students
+                if student.section is 0 and student.grade is 9
+                    student.section = ([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[index%7]
+                if student.section is 0 and student.grade is 10
+                    student.section = ([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[index%8]
+                
                 available_classes = []
                 available_classes = _.filter(classes, (class_) -> return filter(class_, student))
                 old_classes = available_classes
                 available_classes = _.filter(available_classes, (class_, name) -> return class_.check_enrollment_possible(student.id)[0])
                 preferred_classes = _.filter(available_classes, (class_, name) -> return parseInt(class_.sect) in student.section)
-                if student.id is '177-10' and requirement is 'science'
-                    console.log available_classes
-                # for c in old_classes
-                    # if c.code is 'SCS21' and student.id is '177-10'
-                        # console.log available_classes
-                        # break
-                        # console.log c.sect,student.section
-                    # console.log parseInt(c.sect) in student.section
-                    # console.log ' '
+                # if student.id is '173-10' and requirement is 'lab'
                     # console.log preferred_classes
+                # for c in available_classes
+                    # if c.code is 'SCS21QL' and student.id is '173-10'
+                        # console.log parseInt(class_.sect), student.section
+  
                 
                 # console.log available_classes if index is 5
                 # console.log requirement if available_classes.length is 0
             
-                if student.section is 0 and student.grade is 9
-                    student.section = ([[2,5], [1,4,7], [3,6], [2,5], [3,6], [1,4,7], [1,4,7]])[index%7]
-                if student.section is 0 and student.grade is 10
-                    student.section = ([[1,2,7], [3,4,8], [5,6], [1,2,7], [1,2,7], [3,4,8], [3,4,8], [5,6]])[index%8]
+                
             
                 if student[requirement] isnt ''
                     break
@@ -284,7 +282,16 @@ populate_schedule_with_students = ->
     
     fill_class('english', (class_, student) ->
         return class_.grade is student.grade and class_.code.search(/EES41|EES43/) is 0
-    )  
+    )
+    
+    fill_class('language', (class_, student) ->
+        return class_.grade is student.grade and class_.code.search(/FSS32|FLS32|FMS32|FSS31|FLS31|FMS31/) is 0
+    )
+    
+    # fill_class('gym', (class_, student) ->
+       # return class_.grade is student.grade and class_.code.search(/PE/) is 0
+    # )
+    
 for c in classes
     console.log c
     if c.code is 'SPS21QL'
@@ -304,9 +311,9 @@ load_data(()->
         
     counter = 0
     for student in students
-        if not student.lab or not student.science or not student.math or not student.history or not student.english
+        if not student.lab or not student.science or not student.math or not student.history or not student.english or not language #or not student.gym
             counter++
-            console.log student
+            # console.log student
             
     
         
