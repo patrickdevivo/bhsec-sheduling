@@ -1,14 +1,11 @@
 {
-	"name": "BHSEC Scheduling",
+	"name": "BHSEC-Scheduling",
 	"version": "0.1.0",	
 	"dependencies": {
+		"coffee-script": "*",
 		"csv": "*",
 		"cli-table": "*",
 		"request": "*",
 		"underscore": "*"
-	},
-	"engines": {
-		"node": "0.x.x",
-		"npm": "1.1.x"
-	},
+	}
 }
